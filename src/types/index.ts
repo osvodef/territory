@@ -5,7 +5,8 @@ export type DataField =
   | 'antillesAndAruba'
   | 'surinam'
   | 'turkey'
-  | 'otherNonWestern';
+  | 'otherNonWestern'
+  | 'total';
 
 export type RegionType = 'gemeente' | 'wijk' | 'buurt';
 

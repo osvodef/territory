@@ -3,8 +3,8 @@
   import { onMounted, onUnmounted, ref, watch } from 'vue';
   import type { AnyLayer, Map } from 'mapbox-gl';
   import { accessToken } from '@/constants';
-  import type { DataField, Region, RegionType, Regions } from '@/types';
-  import { calcPercentage, toPrecision } from '@/utils';
+  import type { DataField, RegionType, Regions } from '@/types';
+  import { calcPercentage, formatPercentage, toPrecision } from '@/utils';
 
   import { scaleSequential } from 'd3-scale';
   import { interpolateReds } from 'd3-scale-chromatic';
@@ -16,44 +16,21 @@
   let map: Map;
   let populationData: { [key in RegionType]: Regions };
 
-  watch(
-    () => store.regionType,
-    () => {
-      map.setLayoutProperty('gemeente', 'visibility', 'none');
-      map.setLayoutProperty('wijk', 'visibility', 'none');
-      map.setLayoutProperty('buurt', 'visibility', 'none');
-
-      map.setLayoutProperty('gemeente-outline', 'visibility', 'none');
-      map.setLayoutProperty('wijk-outline', 'visibility', 'none');
-      map.setLayoutProperty('buurt-outline', 'visibility', 'none');
-
-      map.setLayoutProperty(store.regionType, 'visibility', 'visible');
-      map.setLayoutProperty(`${store.regionType}-outline`, 'visibility', 'visible');
-
-      applyColors(store.regionType, store.dataField);
-    },
-  );
-
-  watch(
-    () => store.dataField,
-    () => {
-      applyColors(store.regionType, store.dataField);
-    },
-  );
+  watch([() => store.regionType, () => store.dataField], rerenderChoropleth);
 
   watch(
     () => store.hover,
     (curr, prev) => {
       if (prev !== undefined) {
         map.setFeatureState(
-          { source: prev.regionType, sourceLayer: prev.regionType, id: prev.id },
+          { source: prev.regionType, sourceLayer: prev.regionType, id: prev.region.id },
           { hover: false },
         );
       }
 
       if (curr !== undefined) {
         map.setFeatureState(
-          { source: curr.regionType, sourceLayer: curr.regionType, id: curr.id },
+          { source: curr.regionType, sourceLayer: curr.regionType, id: curr.region.id },
           { hover: true },
         );
       }
@@ -61,6 +38,53 @@
       map.getCanvas().style.cursor = curr !== undefined ? 'pointer' : 'auto';
     },
   );
+
+  watch(
+    () => store.selection,
+    (curr, prev) => {
+      if (prev !== undefined) {
+        map.setFeatureState(
+          { source: prev.regionType, sourceLayer: prev.regionType, id: prev.region.id },
+          { selection: false },
+        );
+      }
+
+      if (curr !== undefined) {
+        map.setFeatureState(
+          { source: curr.regionType, sourceLayer: curr.regionType, id: curr.region.id },
+          { selection: true },
+        );
+      }
+    },
+  );
+
+  function rerenderChoropleth(): void {
+    const { regionType, dataField } = store;
+
+    map.setLayoutProperty('gemeente', 'visibility', 'none');
+    map.setLayoutProperty('wijk', 'visibility', 'none');
+    map.setLayoutProperty('buurt', 'visibility', 'none');
+
+    map.setLayoutProperty('gemeente-outline', 'visibility', 'none');
+    map.setLayoutProperty('wijk-outline', 'visibility', 'none');
+    map.setLayoutProperty('buurt-outline', 'visibility', 'none');
+
+    map.setLayoutProperty(regionType, 'visibility', 'visible');
+    map.setLayoutProperty(`${regionType}-outline`, 'visibility', 'visible');
+
+    const colorScale = scaleSequential([0, 0.5], interpolateReds);
+    const regions = populationData[regionType];
+
+    for (const id in regions) {
+      const percentage = calcPercentage(regions[id], dataField);
+      const color = colorScale(percentage);
+
+      map.setFeatureState(
+        { source: regionType, sourceLayer: regionType, id },
+        { fillColor: color },
+      );
+    }
+  }
 
   onMounted(async () => {
     mapboxgl.accessToken = accessToken;
@@ -108,112 +132,79 @@
       promoteId: 'id',
     });
 
+    const fillLayer = {
+      type: 'fill',
+      slot: 'top',
+      paint: {
+        'fill-color': ['feature-state', 'fillColor'],
+        'fill-opacity': 0.75,
+        'fill-antialias': false,
+      },
+    };
+
+    const outlineLayer = {
+      type: 'line',
+      slot: 'top',
+      paint: {
+        'line-color': [
+          'case',
+          ['boolean', ['feature-state', 'selection'], false],
+          'rgba(100, 100, 100, 1)',
+          ['boolean', ['feature-state', 'hover'], false],
+          'rgba(0, 0, 0, 1)',
+          'rgba(0, 0, 0, 0.2)',
+        ],
+        'line-width': [
+          'case',
+          ['boolean', ['feature-state', 'selection'], false],
+          2,
+          ['boolean', ['feature-state', 'hover'], false],
+          0.5,
+          0.5,
+        ],
+      },
+    };
+
     map.addLayer({
+      ...fillLayer,
       'id': 'gemeente',
       'source': 'gemeente',
       'source-layer': 'gemeente',
-      'type': 'fill',
-      'slot': 'top',
-      'layout': {
-        visibility: store.regionType === 'gemeente' ? 'visible' : 'none',
-      },
-      'paint': {
-        'fill-color': ['feature-state', 'fillColor'],
-        'fill-opacity': 0.75,
-        'fill-antialias': false,
-      },
     } as AnyLayer);
 
     map.addLayer({
+      ...outlineLayer,
       'id': 'gemeente-outline',
       'source': 'gemeente',
       'source-layer': 'gemeente',
-      'type': 'line',
-      'slot': 'top',
-      'layout': {
-        visibility: store.regionType === 'gemeente' ? 'visible' : 'none',
-      },
-      'paint': {
-        'line-color': [
-          'case',
-          ['boolean', ['feature-state', 'hover'], false],
-          'rgba(0, 0, 0, 1)',
-          'rgba(0, 0, 0, 0.2)',
-        ],
-        'line-width': 0.5,
-      },
     } as AnyLayer);
 
     map.addLayer({
+      ...fillLayer,
       'id': 'wijk',
       'source': 'wijk',
       'source-layer': 'wijk',
-      'type': 'fill',
-      'slot': 'top',
-      'layout': {
-        visibility: store.regionType === 'wijk' ? 'visible' : 'none',
-      },
-      'paint': {
-        'fill-color': ['feature-state', 'fillColor'],
-        'fill-opacity': 0.75,
-        'fill-antialias': false,
-      },
     } as AnyLayer);
 
     map.addLayer({
+      ...outlineLayer,
       'id': 'wijk-outline',
       'source': 'wijk',
       'source-layer': 'wijk',
-      'type': 'line',
-      'slot': 'top',
-      'layout': {
-        visibility: store.regionType === 'wijk' ? 'visible' : 'none',
-      },
-      'paint': {
-        'line-color': [
-          'case',
-          ['boolean', ['feature-state', 'hover'], false],
-          'rgba(0, 0, 0, 1)',
-          'rgba(0, 0, 0, 0.2)',
-        ],
-        'line-width': 0.5,
-      },
     } as AnyLayer);
 
     map.addLayer({
+      ...fillLayer,
       'id': 'buurt',
       'source': 'buurt',
       'source-layer': 'buurt',
-      'type': 'fill',
-      'slot': 'top',
-      'layout': {
-        visibility: store.regionType === 'buurt' ? 'visible' : 'none',
-      },
-      'paint': {
-        'fill-color': ['feature-state', 'fillColor'],
-        'fill-opacity': 0.75,
-        'fill-antialias': false,
-      },
     } as AnyLayer);
 
     map.addLayer({
+      ...outlineLayer,
       'id': 'buurt-outline',
       'source': 'buurt',
       'source-layer': 'buurt',
-      'type': 'line',
-      'slot': 'top',
-      'layout': {
-        visibility: store.regionType === 'buurt' ? 'visible' : 'none',
-      },
-      'paint': {
-        'line-color': [
-          'case',
-          ['boolean', ['feature-state', 'hover'], false],
-          'rgba(0, 0, 0, 1)',
-          'rgba(0, 0, 0, 0.2)',
-        ],
-        'line-width': 0.5,
-      },
     } as AnyLayer);
 
     map.on('mousemove', e => {
@@ -231,18 +222,7 @@
       const regionType = hoveredFeature.source as RegionType;
       const id = hoveredFeature!.properties!.id as string;
 
-      const region = populationData[regionType][id];
-      const name = region.name;
-      const value = calcPercentage(region, store.dataField);
-
-      store.hover = {
-        id,
-        regionType,
-        title: name,
-        content: `${toPrecision(value * 100, 1)}%`,
-        x: e.point.x,
-        y: e.point.y,
-      };
+      store.hover = { regionType, region: populationData[regionType][id] };
     });
 
     map.on('mouseout', () => {
@@ -253,33 +233,36 @@
       store.hover = undefined;
     });
 
+    map.on('click', e => {
+      const clickedFeatures = map.queryRenderedFeatures(e.point, {
+        layers: ['gemeente', 'wijk', 'buurt'],
+      });
+
+      const clickedFeature = clickedFeatures[0];
+
+      if (clickedFeature === undefined) {
+        store.selection = undefined;
+        return;
+      }
+
+      const regionType = clickedFeature.source as RegionType;
+      const id = clickedFeature!.properties!.id as string;
+
+      store.selection = { regionType, region: populationData[regionType][id] };
+    });
+
     populationData = {
       gemeente: data[0] as Regions,
       wijk: data[1] as Regions,
       buurt: data[2] as Regions,
     };
 
-    applyColors(store.regionType, store.dataField);
+    rerenderChoropleth();
   });
 
   onUnmounted(() => {
     map.remove();
   });
-
-  function applyColors(regionType: RegionType, dataField: DataField): void {
-    const colorScale = scaleSequential([0, 0.5], interpolateReds);
-    const regions = populationData[regionType];
-
-    for (const id in regions) {
-      const percentage = calcPercentage(regions[id], dataField);
-      const color = colorScale(percentage);
-
-      map.setFeatureState(
-        { source: regionType, sourceLayer: regionType, id },
-        { fillColor: color },
-      );
-    }
-  }
 </script>
 
 <template>

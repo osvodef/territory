@@ -1,8 +1,18 @@
 <script setup lang="ts">
   import { useStore } from '@/stores';
+  import type { Region } from '@/types';
+  import { calcPercentage, formatPercentage, useMouse } from '@/utils';
   import { computed } from 'vue';
 
   const store = useStore();
+  const mouse = useMouse();
+
+  const props = defineProps<{ region: Region }>();
+  const region = computed(() => props.region);
+
+  const percentage = computed(() => {
+    return formatPercentage(calcPercentage(region.value, store.dataField));
+  });
 
   const tooltipPosition = computed(() => {
     if (store.hover === undefined) {
@@ -10,8 +20,8 @@
     }
 
     return {
-      left: `${store.hover.x + 15}px`,
-      top: `${store.hover.y + 15}px`,
+      left: `${mouse.x.value + 15}px`,
+      top: `${mouse.y.value + 15}px`,
     };
   });
 </script>
@@ -19,8 +29,8 @@
 <template>
   <div class="container" v-if="store.hover">
     <div class="tooltip" :style="tooltipPosition">
-      <div class="tooltip-title">{{ store.hover.title }}</div>
-      <div class="tooltip-content">{{ store.hover.content }}</div>
+      <div class="tooltip-title">{{ region.name }}</div>
+      <div class="tooltip-content">{{ percentage }}</div>
     </div>
   </div>
 </template>
