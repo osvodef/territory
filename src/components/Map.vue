@@ -23,7 +23,12 @@
       map.setLayoutProperty('wijk', 'visibility', 'none');
       map.setLayoutProperty('buurt', 'visibility', 'none');
 
+      map.setLayoutProperty('gemeente-outline', 'visibility', 'none');
+      map.setLayoutProperty('wijk-outline', 'visibility', 'none');
+      map.setLayoutProperty('buurt-outline', 'visibility', 'none');
+
       map.setLayoutProperty(store.regionType, 'visibility', 'visible');
+      map.setLayoutProperty(`${store.regionType}-outline`, 'visibility', 'visible');
 
       applyColors(store.regionType, store.dataField);
     },
@@ -115,12 +120,27 @@
       'paint': {
         'fill-color': ['feature-state', 'fillColor'],
         'fill-opacity': 0.75,
-        'fill-outline-color': [
+        'fill-antialias': false,
+      },
+    } as AnyLayer);
+
+    map.addLayer({
+      'id': 'gemeente-outline',
+      'source': 'gemeente',
+      'source-layer': 'gemeente',
+      'type': 'line',
+      'slot': 'top',
+      'layout': {
+        visibility: store.regionType === 'gemeente' ? 'visible' : 'none',
+      },
+      'paint': {
+        'line-color': [
           'case',
           ['boolean', ['feature-state', 'hover'], false],
           'rgba(0, 0, 0, 1)',
-          'rgba(0, 0, 0, 0.25)',
+          'rgba(0, 0, 0, 0.2)',
         ],
+        'line-width': 0.5,
       },
     } as AnyLayer);
 
@@ -136,12 +156,27 @@
       'paint': {
         'fill-color': ['feature-state', 'fillColor'],
         'fill-opacity': 0.75,
-        'fill-outline-color': [
+        'fill-antialias': false,
+      },
+    } as AnyLayer);
+
+    map.addLayer({
+      'id': 'wijk-outline',
+      'source': 'wijk',
+      'source-layer': 'wijk',
+      'type': 'line',
+      'slot': 'top',
+      'layout': {
+        visibility: store.regionType === 'wijk' ? 'visible' : 'none',
+      },
+      'paint': {
+        'line-color': [
           'case',
           ['boolean', ['feature-state', 'hover'], false],
           'rgba(0, 0, 0, 1)',
-          'rgba(0, 0, 0, 0.25)',
+          'rgba(0, 0, 0, 0.2)',
         ],
+        'line-width': 0.5,
       },
     } as AnyLayer);
 
@@ -157,12 +192,27 @@
       'paint': {
         'fill-color': ['feature-state', 'fillColor'],
         'fill-opacity': 0.75,
-        'fill-outline-color': [
+        'fill-antialias': false,
+      },
+    } as AnyLayer);
+
+    map.addLayer({
+      'id': 'buurt-outline',
+      'source': 'buurt',
+      'source-layer': 'buurt',
+      'type': 'line',
+      'slot': 'top',
+      'layout': {
+        visibility: store.regionType === 'buurt' ? 'visible' : 'none',
+      },
+      'paint': {
+        'line-color': [
           'case',
           ['boolean', ['feature-state', 'hover'], false],
           'rgba(0, 0, 0, 1)',
-          'rgba(0, 0, 0, 0.25)',
+          'rgba(0, 0, 0, 0.2)',
         ],
+        'line-width': 0.5,
       },
     } as AnyLayer);
 
