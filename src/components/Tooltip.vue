@@ -5,22 +5,22 @@
   const store = useStore();
 
   const tooltipPosition = computed(() => {
-    if (store.tooltip === undefined) {
+    if (store.hover === undefined) {
       return;
     }
 
     return {
-      left: `${store.tooltip.x + 15}px`,
-      top: `${store.tooltip.y + 15}px`,
+      left: `${store.hover.x + 15}px`,
+      top: `${store.hover.y + 15}px`,
     };
   });
 </script>
 
 <template>
-  <div class="container" v-if="store.tooltip">
+  <div class="container" v-if="store.hover">
     <div class="tooltip" :style="tooltipPosition">
-      <div class="tooltip-title">{{ store.tooltip.title }}</div>
-      <div class="tooltip-content">{{ store.tooltip.content }}</div>
+      <div class="tooltip-title">{{ store.hover.title }}</div>
+      <div class="tooltip-content">{{ store.hover.content }}</div>
     </div>
   </div>
 </template>

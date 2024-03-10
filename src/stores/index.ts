@@ -1,7 +1,9 @@
 import type { DataField, RegionType } from '@/types';
 import { defineStore } from 'pinia';
 
-interface Tooltip {
+interface Hover {
+  regionType: RegionType;
+  id: string;
   title: string;
   content: string;
   x: number;
@@ -11,7 +13,7 @@ interface Tooltip {
 export interface State {
   regionType: RegionType;
   dataField: DataField;
-  tooltip: Tooltip | undefined;
+  hover: Hover | undefined;
 }
 
 export const useStore = defineStore('store', {
@@ -19,7 +21,7 @@ export const useStore = defineStore('store', {
     return {
       regionType: 'gemeente',
       dataField: 'nonWesternTotal',
-      tooltip: undefined,
+      hover: undefined,
     };
   },
 });

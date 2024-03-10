@@ -36,6 +36,27 @@
     },
   );
 
+  watch(
+    () => store.hover,
+    (curr, prev) => {
+      if (prev !== undefined) {
+        map.setFeatureState(
+          { source: prev.regionType, sourceLayer: prev.regionType, id: prev.id },
+          { hover: false },
+        );
+      }
+
+      if (curr !== undefined) {
+        map.setFeatureState(
+          { source: curr.regionType, sourceLayer: curr.regionType, id: curr.id },
+          { hover: true },
+        );
+      }
+
+      map.getCanvas().style.cursor = curr !== undefined ? 'pointer' : 'auto';
+    },
+  );
+
   onMounted(async () => {
     mapboxgl.accessToken = accessToken;
 
@@ -94,7 +115,12 @@
       'paint': {
         'fill-color': ['feature-state', 'fillColor'],
         'fill-opacity': 0.75,
-        'fill-outline-color': 'rgba(0, 0, 0, 0.25)',
+        'fill-outline-color': [
+          'case',
+          ['boolean', ['feature-state', 'hover'], false],
+          'rgba(0, 0, 0, 1)',
+          'rgba(0, 0, 0, 0.25)',
+        ],
       },
     } as AnyLayer);
 
@@ -110,7 +136,12 @@
       'paint': {
         'fill-color': ['feature-state', 'fillColor'],
         'fill-opacity': 0.75,
-        'fill-outline-color': 'rgba(0, 0, 0, 0.25)',
+        'fill-outline-color': [
+          'case',
+          ['boolean', ['feature-state', 'hover'], false],
+          'rgba(0, 0, 0, 1)',
+          'rgba(0, 0, 0, 0.25)',
+        ],
       },
     } as AnyLayer);
 
@@ -126,7 +157,12 @@
       'paint': {
         'fill-color': ['feature-state', 'fillColor'],
         'fill-opacity': 0.75,
-        'fill-outline-color': 'rgba(0, 0, 0, 0.25)',
+        'fill-outline-color': [
+          'case',
+          ['boolean', ['feature-state', 'hover'], false],
+          'rgba(0, 0, 0, 1)',
+          'rgba(0, 0, 0, 0.25)',
+        ],
       },
     } as AnyLayer);
 
@@ -137,38 +173,34 @@
 
       const hoveredFeature = hoveredFeatures[0];
 
-      if (hoveredFeature !== undefined) {
-        map.getCanvas().style.cursor = 'pointer';
-
-        const regionType = hoveredFeature.source as RegionType;
-        const id = hoveredFeature!.properties!.id as string;
-
-        const region = populationData[regionType][id];
-        const name = region.name;
-        const value = calcPercentage(region, store.dataField);
-
-        store.tooltip = {
-          title: name,
-          content: `${toPrecision(value * 100, 1)}%`,
-          x: e.point.x,
-          y: e.point.y,
-        };
-      } else {
-        map.getCanvas().style.cursor = 'auto';
-        store.tooltip = undefined;
+      if (hoveredFeature === undefined) {
+        store.hover = undefined;
+        return;
       }
 
-      map.getCanvas().style.cursor = hoveredFeature !== undefined ? 'pointer' : 'auto';
+      const regionType = hoveredFeature.source as RegionType;
+      const id = hoveredFeature!.properties!.id as string;
+
+      const region = populationData[regionType][id];
+      const name = region.name;
+      const value = calcPercentage(region, store.dataField);
+
+      store.hover = {
+        id,
+        regionType,
+        title: name,
+        content: `${toPrecision(value * 100, 1)}%`,
+        x: e.point.x,
+        y: e.point.y,
+      };
     });
 
     map.on('mouseout', () => {
-      map.getCanvas().style.cursor = 'auto';
-      store.tooltip = undefined;
+      store.hover = undefined;
     });
 
     map.on('movestart', () => {
-      map.getCanvas().style.cursor = 'grabbing';
-      store.tooltip = undefined;
+      store.hover = undefined;
     });
 
     populationData = {
