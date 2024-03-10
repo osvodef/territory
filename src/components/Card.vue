@@ -10,9 +10,9 @@
   const region = computed(() => props.region);
 
   const rows: Array<{ name: string; field: DataField }> = [
-    { name: 'Total', field: 'total' },
-    { name: 'Western', field: 'westernTotal' },
+    { name: 'Population', field: 'total' },
     { name: 'Non-western', field: 'nonWesternTotal' },
+    { name: 'Western', field: 'westernTotal' },
     { name: 'Morocco', field: 'morocco' },
     { name: 'Antilles and Aruba', field: 'antillesAndAruba' },
     { name: 'Surinam', field: 'surinam' },
@@ -22,12 +22,20 @@
 
 <template>
   <div class="container" v-if="store.selection">
-    <div class="name">{{ region.name }}</div>
+    <div class="title">{{ region.name }}</div>
     <div class="rows">
-      <div class="row" v-for="{ name, field } of rows" :key="field">
-        <div class="cell">{{ name }}</div>
-        <div class="cell">{{ formatNumber(region[field]) }}</div>
-        <div class="cell">{{ formatPercentageFixed(calcPercentage(region, field)) }}</div>
+      <div class="row header">
+        <div class="cell name">Statistic</div>
+        <div class="cell number">Total</div>
+        <div class="cell percentage">Ratio</div>
+      </div>
+
+      <div :class="['row', field]" v-for="{ name, field } of rows" :key="field">
+        <div class="cell name">{{ name }}</div>
+        <div class="cell number">{{ formatNumber(region[field]) }}</div>
+        <div class="cell percentage">
+          {{ formatPercentageFixed(calcPercentage(region, field)) }}
+        </div>
       </div>
     </div>
   </div>
@@ -35,21 +43,55 @@
 
 <style scoped>
   .container {
-    padding: 20px;
+    padding: 15px 20px;
     border-radius: 5px;
   }
 
-  .name {
+  .title {
+    font-size: 24px;
     font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .rows {
+    font-size: 14px;
   }
 
   .row {
     display: flex;
+    margin-bottom: 3px;
+  }
+
+  .row.header {
+    font-weight: bold;
+  }
+
+  .row.header {
+    margin-bottom: 5px;
+  }
+
+  .row.total,
+  .row.westernTotal {
+    margin-bottom: 15px;
   }
 
   .cell {
+    flex-grow: 0;
+    flex-shrink: 0;
     flex-basis: 0;
-    flex-grow: 1;
+  }
+
+  .cell.name {
+    min-width: 160px;
+  }
+
+  .cell.number {
+    min-width: 70px;
+    text-align: end;
+  }
+
+  .cell.percentage {
+    min-width: 120px;
     text-align: end;
   }
 </style>

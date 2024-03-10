@@ -11,13 +11,12 @@
   ];
 
   const dataFieldOptions: Array<{ field: DataField; name: string; indent: boolean }> = [
-    { field: 'westernTotal', name: 'Western', indent: false },
-    { field: 'nonWesternTotal', name: 'Non-western', indent: false },
-    { field: 'morocco', name: 'Non-western (Morocco)', indent: true },
-    { field: 'antillesAndAruba', name: 'Non-western (Antilles and Aruba)', indent: true },
-    { field: 'surinam', name: 'Non-western (Surinam)', indent: true },
-    { field: 'turkey', name: 'Non-western (Turkey)', indent: true },
-    { field: 'otherNonWestern', name: 'Non-western (other)', indent: true },
+    { field: 'nonWesternTotal', name: 'Non-western migrants', indent: false },
+    { field: 'westernTotal', name: 'Western migrants', indent: false },
+    { field: 'morocco', name: 'Migrants from Morocco', indent: true },
+    { field: 'antillesAndAruba', name: 'Migrants from Antilles and Aruba', indent: true },
+    { field: 'surinam', name: 'Migrants from Surinam', indent: true },
+    { field: 'turkey', name: 'Migrants from Turkey', indent: true },
   ];
 </script>
 
