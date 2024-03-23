@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { useStore } from '@/stores';
+  import { useStore } from '@/store';
   import type { DataField, Region } from '@/types';
   import { calcPercentage, formatNumber, formatPercentageFixed } from '@/utils';
   import { computed } from 'vue';

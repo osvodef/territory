@@ -11,15 +11,17 @@ export interface State {
   dataField: DataField;
   hover: RegionInfo | undefined;
   selection: RegionInfo | undefined;
+  maxColorRatio: number;
 }
 
 export const useStore = defineStore('store', {
   state: (): State => {
     return {
-      regionType: 'gemeente',
+      regionType: 'wijk',
       dataField: 'nonWesternTotal',
       hover: undefined,
       selection: undefined,
+      maxColorRatio: 0.5,
     };
   },
 });

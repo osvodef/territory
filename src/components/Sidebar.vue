@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { useStore } from '@/stores';
+  import { useStore } from '@/store';
   import type { DataField, RegionType } from '@/types';
 
   const store = useStore();
@@ -44,6 +44,17 @@
         {{ name }}
       </div>
     </div>
+    <div class="header">Options</div>
+    <div>Max color percentage</div>
+    <input
+      type="range"
+      class="max-ratio-slider"
+      min="0"
+      max="1"
+      step="0.1"
+      :value="store.maxColorRatio"
+      @input="store.maxColorRatio = Number(($event.target as HTMLInputElement).value)"
+    />
   </div>
 </template>
 
@@ -92,6 +103,10 @@
     border-left: none;
   }
 
+  .data-fields {
+    margin-bottom: 20px;
+  }
+
   .data-field {
     border: 1px solid #ccc;
     padding: 5px;
@@ -115,5 +130,12 @@
 
   .data-field:not(:first-child) {
     border-top: none;
+  }
+
+  .max-ratio-slider {
+    display: block;
+    margin: 0;
+    padding: 0;
+    width: 100%;
   }
 </style>

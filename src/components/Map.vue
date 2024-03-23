@@ -1,14 +1,13 @@
 <script setup lang="ts">
-  import mapboxgl from 'mapbox-gl';
   import { onMounted, onUnmounted, ref, watch } from 'vue';
-  import type { AnyLayer, Map } from 'mapbox-gl';
-  import { accessToken } from '@/constants';
-  import type { DataField, RegionType, Regions } from '@/types';
-  import { calcPercentage, formatPercentage, toPrecision } from '@/utils';
-
-  import { scaleSequential } from 'd3-scale';
   import { interpolateReds } from 'd3-scale-chromatic';
-  import { useStore } from '@/stores';
+  import type { RegionType, Regions } from '@/types';
+  import type { AnyLayer, Map } from 'mapbox-gl';
+  import { scaleSequential } from 'd3-scale';
+  import { accessToken } from '@/constants';
+  import { calcPercentage } from '@/utils';
+  import { useStore } from '@/store';
+  import mapboxgl from 'mapbox-gl';
 
   const store = useStore();
   const container = ref<HTMLDivElement>();
@@ -16,7 +15,10 @@
   let map: Map;
   let populationData: { [key in RegionType]: Regions };
 
-  watch([() => store.regionType, () => store.dataField], rerenderChoropleth);
+  watch(
+    [() => store.regionType, () => store.dataField, () => store.maxColorRatio],
+    rerenderChoropleth,
+  );
 
   watch(
     () => store.hover,
@@ -72,8 +74,10 @@
     map.setLayoutProperty(regionType, 'visibility', 'visible');
     map.setLayoutProperty(`${regionType}-outline`, 'visibility', 'visible');
 
-    const colorScale = scaleSequential([0, 0.5], interpolateReds);
+    const colorScale = scaleSequential([0, store.maxColorRatio], interpolateReds);
     const regions = populationData[regionType];
+
+    const values: number[] = [];
 
     for (const id in regions) {
       const percentage = calcPercentage(regions[id], dataField);
@@ -83,7 +87,12 @@
         { source: regionType, sourceLayer: regionType, id },
         { fillColor: color },
       );
+
+      values.push(percentage);
     }
+
+    // values.sort();
+    // console.log(values);
   }
 
   onMounted(async () => {
@@ -91,8 +100,8 @@
 
     map = new mapboxgl.Map({
       container: container.value as HTMLDivElement,
-      zoom: 2,
-      center: [0, 0],
+      bounds: [3.366, 50.754, 7.227, 53.54],
+      fitBoundsOptions: { padding: 20 },
       hash: true,
       projection: { name: 'mercator' },
       minZoom: 6,
@@ -152,7 +161,7 @@
           'rgba(100, 100, 100, 1)',
           ['boolean', ['feature-state', 'hover'], false],
           'rgba(0, 0, 0, 1)',
-          'rgba(0, 0, 0, 0.2)',
+          'rgba(0, 0, 0, 0.15)',
         ],
         'line-width': [
           'case',
