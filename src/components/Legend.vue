@@ -30,7 +30,7 @@
 
     for (let i = 0; i < colorCount; i++) {
       ctx.fillStyle = colors[colorCount - 1 - i];
-      ctx.fillRect(0, (i / colorCount) * cssHeight, cssWidth, cssHeight / colorCount);
+      ctx.fillRect(0, (i / colorCount) * height, width, height / colorCount);
     }
   });
 
