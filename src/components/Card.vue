@@ -1,13 +1,25 @@
 <script setup lang="ts">
   import { useStore } from '@/store';
-  import type { DataField, Region } from '@/types';
+  import type { DataField, Region, RegionType } from '@/types';
   import { calcPercentage, formatNumber, formatPercentageFixed } from '@/utils';
   import { computed } from 'vue';
 
   const store = useStore();
 
-  const props = defineProps<{ region: Region }>();
+  const props = defineProps<{ region: Region; regionType: RegionType }>();
+
   const region = computed(() => props.region);
+  const regionTypeName = computed(() => {
+    if (props.regionType === 'gemeente') {
+      return 'Gemeente';
+    }
+
+    if (props.regionType === 'wijk') {
+      return 'Wijk';
+    }
+
+    return 'Buurt';
+  });
 
   const rows: Array<{ name: string; field: DataField }> = [
     { name: 'Population', field: 'total' },
@@ -23,9 +35,10 @@
 <template>
   <div class="container" v-if="store.selection">
     <div class="title">{{ region.name }}</div>
+    <div class="subtitle">{{ regionTypeName }}</div>
     <div class="rows">
       <div class="row header">
-        <div class="cell name">Statistic</div>
+        <div class="cell name"></div>
         <div class="cell number">Total</div>
         <div class="cell percentage">Ratio</div>
       </div>
@@ -38,6 +51,7 @@
         </div>
       </div>
     </div>
+    <img class="close-modal" src="@/icons/cross.svg" @click="store.selection = undefined" />
   </div>
 </template>
 
@@ -50,7 +64,12 @@
   .title {
     font-size: 24px;
     font-weight: bold;
-    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-style: italic;
+    font-size: 14px;
+    color: #777777;
   }
 
   .rows {
@@ -93,5 +112,15 @@
   .cell.percentage {
     min-width: 120px;
     text-align: end;
+  }
+
+  .close-modal {
+    display: block;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
   }
 </style>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { useStore } from '@/store';
   import type { DataField, RegionType } from '@/types';
+  import ColorController from '@/components/ColorController.vue';
 
   const store = useStore();
 
@@ -10,13 +11,30 @@
     { type: 'buurt', name: 'Buurt' },
   ];
 
-  const dataFieldOptions: Array<{ field: DataField; name: string; indent: boolean }> = [
-    { field: 'nonWesternTotal', name: 'Non-western migrants', indent: false },
-    { field: 'westernTotal', name: 'Western migrants', indent: false },
-    { field: 'morocco', name: 'Migrants from Morocco', indent: true },
-    { field: 'antillesAndAruba', name: 'Migrants from Antilles and Aruba', indent: true },
-    { field: 'surinam', name: 'Migrants from Surinam', indent: true },
-    { field: 'turkey', name: 'Migrants from Turkey', indent: true },
+  const dataFieldOptions: Array<{
+    field: DataField;
+    name: string;
+    indent: boolean;
+    infoLink?: string;
+  }> = [
+    {
+      field: 'nonWesternTotal',
+      name: 'Non-western',
+      indent: false,
+      infoLink:
+        'https://www.cbs.nl/en-gb/our-services/methods/definitions/person-with-a-non-western-migration-background',
+    },
+    {
+      field: 'westernTotal',
+      name: 'Western',
+      indent: false,
+      infoLink:
+        'https://www.cbs.nl/en-gb/our-services/methods/definitions/person-with-a-western-migration-background',
+    },
+    { field: 'morocco', name: 'Morocco', indent: true },
+    { field: 'antillesAndAruba', name: 'Antilles and Aruba', indent: true },
+    { field: 'surinam', name: 'Surinam', indent: true },
+    { field: 'turkey', name: 'Turkey', indent: true },
   ];
 </script>
 
@@ -33,28 +51,30 @@
         {{ name }}
       </div>
     </div>
-    <div class="header">Statistic</div>
+    <div class="header">
+      <div>Immigration background</div>
+      <a
+        href="https://www.cbs.nl/en-gb/our-services/methods/definitions/migration-background"
+        target="_blank"
+      >
+        <img src="@/icons/question.svg" class="info" />
+      </a>
+    </div>
     <div class="data-fields">
       <div
-        v-for="{ field, name, indent } of dataFieldOptions"
+        v-for="{ field, name, indent, infoLink } of dataFieldOptions"
         :key="field"
         :class="['data-field', { selected: store.dataField === field, indent }]"
         @click="store.dataField = field"
       >
-        {{ name }}
+        <div>{{ name }}</div>
+        <a v-if="infoLink !== undefined" :href="infoLink" target="_blank">
+          <img src="@/icons/question.svg" class="info" />
+        </a>
       </div>
     </div>
-    <div class="header">Options</div>
-    <div>Max color percentage</div>
-    <input
-      type="range"
-      class="max-ratio-slider"
-      min="0"
-      max="1"
-      step="0.1"
-      :value="store.maxColorRatio"
-      @input="store.maxColorRatio = Number(($event.target as HTMLInputElement).value)"
-    />
+    <div class="header">Color range</div>
+    <ColorController />
   </div>
 </template>
 
@@ -66,13 +86,14 @@
 
   .header {
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
+    display: flex;
   }
 
   .region-types {
     display: flex;
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
   }
 
   .region-type {
@@ -103,11 +124,24 @@
     border-left: none;
   }
 
+  .info {
+    display: block;
+    width: 15px;
+    height: 15px;
+    margin-top: 4px;
+    margin-left: 5px;
+  }
+
+  .header .info {
+    margin-top: 3px;
+  }
+
   .data-fields {
-    margin-bottom: 20px;
+    margin-bottom: 30px;
   }
 
   .data-field {
+    display: flex;
     border: 1px solid #ccc;
     padding: 5px;
     cursor: pointer;

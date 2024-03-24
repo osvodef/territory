@@ -1,11 +1,9 @@
 <script setup lang="ts">
   import { onMounted, onUnmounted, ref, watch } from 'vue';
-  import { interpolateReds } from 'd3-scale-chromatic';
+  import { schemeReds } from 'd3-scale-chromatic';
   import type { RegionType, Regions } from '@/types';
-  import type { AnyLayer, Map } from 'mapbox-gl';
-  import { scaleSequential } from 'd3-scale';
-  import { accessToken } from '@/constants';
-  import { calcPercentage } from '@/utils';
+  import type { AnyLayer, Expression, Map } from 'mapbox-gl';
+  import { accessToken, colorCount } from '@/constants';
   import { useStore } from '@/store';
   import mapboxgl from 'mapbox-gl';
 
@@ -16,7 +14,12 @@
   let populationData: { [key in RegionType]: Regions };
 
   watch(
-    [() => store.regionType, () => store.dataField, () => store.maxColorRatio],
+    [
+      () => store.regionType,
+      () => store.dataField,
+      () => store.minColorRatio,
+      () => store.maxColorRatio,
+    ],
     rerenderChoropleth,
   );
 
@@ -61,7 +64,7 @@
   );
 
   function rerenderChoropleth(): void {
-    const { regionType, dataField } = store;
+    const { regionType, dataField, minColorRatio, maxColorRatio } = store;
 
     map.setLayoutProperty('gemeente', 'visibility', 'none');
     map.setLayoutProperty('wijk', 'visibility', 'none');
@@ -74,25 +77,21 @@
     map.setLayoutProperty(regionType, 'visibility', 'visible');
     map.setLayoutProperty(`${regionType}-outline`, 'visibility', 'visible');
 
-    const colorScale = scaleSequential([0, store.maxColorRatio], interpolateReds);
-    const regions = populationData[regionType];
+    const colors = schemeReds[colorCount];
+    const step = (maxColorRatio - minColorRatio) / colorCount;
 
-    const values: number[] = [];
+    const fillColorExpression: Expression = ['case'];
 
-    for (const id in regions) {
-      const percentage = calcPercentage(regions[id], dataField);
-      const color = colorScale(percentage);
+    for (let i = 0; i < colorCount - 1; i++) {
+      const max = minColorRatio + (i + 1) * step;
+      const color = colors[i];
 
-      map.setFeatureState(
-        { source: regionType, sourceLayer: regionType, id },
-        { fillColor: color },
-      );
-
-      values.push(percentage);
+      fillColorExpression.push(['<', ['get', dataField], max], color);
     }
 
-    // values.sort();
-    // console.log(values);
+    fillColorExpression.push(colors[colorCount - 1]);
+
+    map.setPaintProperty(regionType, 'fill-color', fillColorExpression);
   }
 
   onMounted(async () => {
@@ -105,6 +104,7 @@
       hash: true,
       projection: { name: 'mercator' },
       minZoom: 6,
+      customAttribution: '<a href="https://www.cbs.nl/">© CBS</a>',
     });
 
     (window as any).map = map;
@@ -145,7 +145,7 @@
       type: 'fill',
       slot: 'top',
       paint: {
-        'fill-color': ['feature-state', 'fillColor'],
+        'fill-color': 'rgba(0, 0, 0, 0)',
         'fill-opacity': 0.75,
         'fill-antialias': false,
       },
@@ -158,7 +158,7 @@
         'line-color': [
           'case',
           ['boolean', ['feature-state', 'selection'], false],
-          'rgba(100, 100, 100, 1)',
+          'rgba(32, 32, 32, 1)',
           ['boolean', ['feature-state', 'hover'], false],
           'rgba(0, 0, 0, 1)',
           'rgba(0, 0, 0, 0.15)',

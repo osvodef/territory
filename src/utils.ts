@@ -26,6 +26,10 @@ export function formatPercentageFixed(ratio: number): string {
   return `${(ratio * 100).toFixed(2)}%`;
 }
 
+export function formatTickLabel(ratio: number, addition = ''): string {
+  return `${Math.round(ratio * 100)}%${addition}`;
+}
+
 export function useMouse() {
   const x = ref(0);
   const y = ref(0);
@@ -39,4 +43,32 @@ export function useMouse() {
   onUnmounted(() => window.removeEventListener('mousemove', update));
 
   return { x, y };
+}
+
+export function useDevicePixelRatio() {
+  const devicePixelRatio = ref<number>(window.devicePixelRatio);
+
+  function update() {
+    devicePixelRatio.value = window.devicePixelRatio;
+  }
+
+  onMounted(() => window.addEventListener('resize', update));
+  onUnmounted(() => window.removeEventListener('resize', update));
+
+  return devicePixelRatio;
+}
+
+export function lerp(min: number, max: number, ratio: number): number {
+  return min + (max - min) * ratio;
+}
+
+export function unlerp(min: number, max: number, value: number): number {
+  return (value - min) / (max - min);
+}
+
+export function clamp(value: number, min: number, max: number): number {
+  value = Math.min(value, max);
+  value = Math.max(value, min);
+
+  return value;
 }

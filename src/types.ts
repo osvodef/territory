@@ -5,7 +5,6 @@ export type DataField =
   | 'antillesAndAruba'
   | 'surinam'
   | 'turkey'
-  | 'otherNonWestern'
   | 'total';
 
 export type RegionType = 'gemeente' | 'wijk' | 'buurt';
@@ -20,7 +19,6 @@ export interface Region {
   antillesAndAruba: number;
   surinam: number;
   turkey: number;
-  otherNonWestern: number;
 }
 
 export type Regions = { [id: string]: Region };

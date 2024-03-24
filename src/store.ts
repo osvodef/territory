@@ -11,6 +11,7 @@ export interface State {
   dataField: DataField;
   hover: RegionInfo | undefined;
   selection: RegionInfo | undefined;
+  minColorRatio: number;
   maxColorRatio: number;
 }
 
@@ -21,6 +22,7 @@ export const useStore = defineStore('store', {
       dataField: 'nonWesternTotal',
       hover: undefined,
       selection: undefined,
+      minColorRatio: 0,
       maxColorRatio: 0.5,
     };
   },

@@ -1,7 +1,9 @@
 <script setup lang="ts">
   import { computed, onMounted, ref } from 'vue';
-  import { interpolateReds } from 'd3-scale-chromatic';
+  import { schemeReds } from 'd3-scale-chromatic';
   import { useStore } from '@/store';
+  import { formatTickLabel, lerp } from '@/utils';
+  import { colorCount } from '@/constants';
 
   interface Tick {
     label: string;
@@ -9,7 +11,6 @@
   }
 
   const store = useStore();
-
   const ramp = ref<HTMLCanvasElement>();
 
   const cssWidth = 30;
@@ -18,6 +19,8 @@
   const width = cssWidth * window.devicePixelRatio;
   const height = cssHeight * window.devicePixelRatio;
 
+  const colors = schemeReds[colorCount];
+
   onMounted(() => {
     const canvas = ramp.value!;
     const ctx = canvas.getContext('2d')!;
@@ -25,13 +28,9 @@
     canvas.width = width;
     canvas.height = height;
 
-    for (let i = 0; i <= height; i++) {
-      ctx.strokeStyle = interpolateReds(1 - i / height);
-
-      ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(width, i);
-      ctx.stroke();
+    for (let i = 0; i < colorCount; i++) {
+      ctx.fillStyle = colors[colorCount - 1 - i];
+      ctx.fillRect(0, (i / colorCount) * cssHeight, cssWidth, cssHeight / colorCount);
     }
   });
 
@@ -42,17 +41,22 @@
     for (let i = 0; i < tickCount; i++) {
       const ratio = i / (tickCount - 1);
       const y = Math.round((1 - ratio) * cssHeight);
-      const label = formatLabel(store.maxColorRatio * ratio, i === tickCount - 1);
+      const percentage = lerp(store.minColorRatio, store.maxColorRatio, ratio);
+
+      let addition = '';
+      if (i === 0 && percentage > 0) {
+        addition = '–';
+      } else if (i === tickCount - 1 && percentage < 1) {
+        addition = '+';
+      }
+
+      const label = formatTickLabel(percentage, addition);
 
       ticks.push({ label, y });
     }
 
     return ticks;
   });
-
-  function formatLabel(ratio: number, addPlus: boolean): string {
-    return `${Math.round(ratio * 100)}%${addPlus ? '+' : ''}`;
-  }
 </script>
 
 <template>
@@ -77,20 +81,21 @@
     top: 10px;
     width: 20px;
     height: 480px;
+    opacity: 0.75;
   }
 
   .tick {
     position: absolute;
-    left: 10px;
-    width: 25px;
+    left: 30px;
+    width: 10px;
     height: 0;
-    border-top: 1px solid #000000;
+    border-top: 1px solid #333;
   }
 
   .label {
     position: absolute;
     font-size: 10px;
     top: -8px;
-    left: 30px;
+    left: 15px;
   }
 </style>
