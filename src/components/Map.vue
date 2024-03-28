@@ -3,7 +3,6 @@
   import { schemeReds } from 'd3-scale-chromatic';
   import type { RegionType, Regions } from '@/types';
   import type { AnyLayer, Expression, Map } from 'mapbox-gl';
-  import { accessToken, colorCount } from '@/constants';
   import { useStore } from '@/store';
   import mapboxgl from 'mapbox-gl';
 
@@ -28,16 +27,13 @@
     (curr, prev) => {
       if (prev !== undefined) {
         map.setFeatureState(
-          { source: prev.regionType, sourceLayer: prev.regionType, id: prev.region.id },
+          { source: 'nl', sourceLayer: prev.type, id: prev.id },
           { hover: false },
         );
       }
 
       if (curr !== undefined) {
-        map.setFeatureState(
-          { source: curr.regionType, sourceLayer: curr.regionType, id: curr.region.id },
-          { hover: true },
-        );
+        map.setFeatureState({ source: 'nl', sourceLayer: curr.type, id: curr.id }, { hover: true });
       }
 
       map.getCanvas().style.cursor = curr !== undefined ? 'pointer' : 'auto';
@@ -49,14 +45,14 @@
     (curr, prev) => {
       if (prev !== undefined) {
         map.setFeatureState(
-          { source: prev.regionType, sourceLayer: prev.regionType, id: prev.region.id },
+          { source: 'nl', sourceLayer: prev.type, id: prev.id },
           { selection: false },
         );
       }
 
       if (curr !== undefined) {
         map.setFeatureState(
-          { source: curr.regionType, sourceLayer: curr.regionType, id: curr.region.id },
+          { source: 'nl', sourceLayer: curr.type, id: curr.id },
           { selection: true },
         );
       }
@@ -77,6 +73,7 @@
     map.setLayoutProperty(regionType, 'visibility', 'visible');
     map.setLayoutProperty(`${regionType}-outline`, 'visibility', 'visible');
 
+    const colorCount = 8;
     const colors = schemeReds[colorCount];
     const step = (maxColorRatio - minColorRatio) / colorCount;
 
@@ -95,7 +92,8 @@
   }
 
   onMounted(async () => {
-    mapboxgl.accessToken = accessToken;
+    mapboxgl.accessToken =
+      'pk.eyJ1Ijoib3N2b2RlZiIsImEiOiJjazNwbjNlMWUwNGtkM2Vtb253MjM3cXhvIn0.A9Qebgu0gf2BlndYixeeOw';
 
     map = new mapboxgl.Map({
       container: container.value as HTMLDivElement,
@@ -120,23 +118,32 @@
       fetch('./buurt.json').then(response => response.json()),
     ]);
 
-    map.addSource('gemeente', {
-      type: 'vector',
-      tiles: ['http://localhost:8080/data/gemeente/{z}/{x}/{y}.pbf'],
-      maxzoom: 14,
-      promoteId: 'id',
-    });
+    function prepareData(raw: any, type: RegionType): Regions {
+      const regions: Regions = {};
 
-    map.addSource('wijk', {
-      type: 'vector',
-      tiles: ['http://localhost:8080/data/wijk/{z}/{x}/{y}.pbf'],
-      maxzoom: 14,
-      promoteId: 'id',
-    });
+      for (const rawRegion of raw) {
+        const id = rawRegion[0];
 
-    map.addSource('buurt', {
+        regions[id] = {
+          id,
+          type,
+          name: rawRegion[1],
+          total: rawRegion[2],
+          nonWesternTotal: rawRegion[3],
+          westernTotal: rawRegion[4],
+          morocco: rawRegion[5],
+          antillesAndAruba: rawRegion[6],
+          surinam: rawRegion[7],
+          turkey: rawRegion[8],
+        };
+      }
+
+      return regions;
+    }
+
+    map.addSource('nl', {
       type: 'vector',
-      tiles: ['http://localhost:8080/data/buurt/{z}/{x}/{y}.pbf'],
+      tiles: ['https://territory-tiles-788001ea708e.herokuapp.com/data/nl/{z}/{x}/{y}.pbf'],
       maxzoom: 14,
       promoteId: 'id',
     });
@@ -177,42 +184,42 @@
     map.addLayer({
       ...fillLayer,
       'id': 'gemeente',
-      'source': 'gemeente',
+      'source': 'nl',
       'source-layer': 'gemeente',
     } as AnyLayer);
 
     map.addLayer({
       ...outlineLayer,
       'id': 'gemeente-outline',
-      'source': 'gemeente',
+      'source': 'nl',
       'source-layer': 'gemeente',
     } as AnyLayer);
 
     map.addLayer({
       ...fillLayer,
       'id': 'wijk',
-      'source': 'wijk',
+      'source': 'nl',
       'source-layer': 'wijk',
     } as AnyLayer);
 
     map.addLayer({
       ...outlineLayer,
       'id': 'wijk-outline',
-      'source': 'wijk',
+      'source': 'nl',
       'source-layer': 'wijk',
     } as AnyLayer);
 
     map.addLayer({
       ...fillLayer,
       'id': 'buurt',
-      'source': 'buurt',
+      'source': 'nl',
       'source-layer': 'buurt',
     } as AnyLayer);
 
     map.addLayer({
       ...outlineLayer,
       'id': 'buurt-outline',
-      'source': 'buurt',
+      'source': 'nl',
       'source-layer': 'buurt',
     } as AnyLayer);
 
@@ -228,10 +235,9 @@
         return;
       }
 
-      const regionType = hoveredFeature.source as RegionType;
       const id = hoveredFeature!.properties!.id as string;
 
-      store.hover = { regionType, region: populationData[regionType][id] };
+      store.hover = populationData[store.regionType]?.[id];
     });
 
     map.on('mouseout', () => {
@@ -254,16 +260,15 @@
         return;
       }
 
-      const regionType = clickedFeature.source as RegionType;
       const id = clickedFeature!.properties!.id as string;
 
-      store.selection = { regionType, region: populationData[regionType][id] };
+      store.selection = populationData[store.regionType]?.[id];
     });
 
     populationData = {
-      gemeente: data[0] as Regions,
-      wijk: data[1] as Regions,
-      buurt: data[2] as Regions,
+      gemeente: prepareData(data[0], 'gemeente'),
+      wijk: prepareData(data[1], 'wijk'),
+      buurt: prepareData(data[2], 'buurt'),
     };
 
     rerenderChoropleth();

@@ -11,6 +11,7 @@ export type RegionType = 'gemeente' | 'wijk' | 'buurt';
 
 export interface Region {
   id: string;
+  type: RegionType;
   name: string;
   total: number;
   westernTotal: number;

@@ -36,6 +36,24 @@
     { field: 'surinam', name: 'Surinam', indent: true },
     { field: 'turkey', name: 'Turkey', indent: true },
   ];
+
+  const dataFieldToDefaultRange: { [key in DataField]: [number, number] } = {
+    total: [0, 0.4],
+    nonWesternTotal: [0, 0.4],
+    westernTotal: [0, 0.4],
+    morocco: [0, 0.1],
+    antillesAndAruba: [0, 0.1],
+    surinam: [0, 0.1],
+    turkey: [0, 0.1],
+  };
+
+  function setDataField(field: DataField): void {
+    store.dataField = field;
+
+    const [minRange, maxRange] = dataFieldToDefaultRange[field];
+    store.minColorRatio = minRange;
+    store.maxColorRatio = maxRange;
+  }
 </script>
 
 <template>
@@ -65,7 +83,7 @@
         v-for="{ field, name, indent, infoLink } of dataFieldOptions"
         :key="field"
         :class="['data-field', { selected: store.dataField === field, indent }]"
-        @click="store.dataField = field"
+        @click="setDataField(field)"
       >
         <div>{{ name }}</div>
         <a v-if="infoLink !== undefined" :href="infoLink" target="_blank">

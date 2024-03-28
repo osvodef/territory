@@ -1,16 +1,11 @@
 import type { DataField, Region, RegionType } from '@/types';
 import { defineStore } from 'pinia';
 
-interface RegionInfo {
-  regionType: RegionType;
-  region: Region;
-}
-
 export interface State {
   regionType: RegionType;
   dataField: DataField;
-  hover: RegionInfo | undefined;
-  selection: RegionInfo | undefined;
+  hover: Region | undefined;
+  selection: Region | undefined;
   minColorRatio: number;
   maxColorRatio: number;
 }

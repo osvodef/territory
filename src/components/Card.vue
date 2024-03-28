@@ -1,20 +1,20 @@
 <script setup lang="ts">
   import { useStore } from '@/store';
-  import type { DataField, Region, RegionType } from '@/types';
+  import type { DataField, Region } from '@/types';
   import { calcPercentage, formatNumber, formatPercentageFixed } from '@/utils';
   import { computed } from 'vue';
 
   const store = useStore();
 
-  const props = defineProps<{ region: Region; regionType: RegionType }>();
+  const props = defineProps<{ region: Region }>();
 
   const region = computed(() => props.region);
   const regionTypeName = computed(() => {
-    if (props.regionType === 'gemeente') {
+    if (props.region.type === 'gemeente') {
       return 'Gemeente';
     }
 
-    if (props.regionType === 'wijk') {
+    if (props.region.type === 'wijk') {
       return 'Wijk';
     }
 

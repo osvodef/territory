@@ -13,14 +13,9 @@
   <Map />
 
   <Sidebar class="sidebar" />
-  <Card
-    v-if="store.selection !== undefined"
-    :region-type="store.selection.regionType"
-    :region="store.selection.region"
-    class="card"
-  />
   <Legend class="legend" />
-  <Tooltip v-if="store.hover !== undefined" :region="store.hover.region" />
+  <Card v-if="store.selection !== undefined" :region="store.selection" class="card" />
+  <Tooltip v-if="store.hover !== undefined" :region="store.hover" />
 </template>
 
 <style scoped>

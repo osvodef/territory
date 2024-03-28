@@ -1,9 +1,8 @@
 <script setup lang="ts">
   import { computed, onMounted, ref } from 'vue';
-  import { schemeReds } from 'd3-scale-chromatic';
+  import { interpolateReds } from 'd3-scale-chromatic';
   import { useStore } from '@/store';
   import { formatTickLabel, lerp } from '@/utils';
-  import { colorCount } from '@/constants';
 
   interface Tick {
     label: string;
@@ -19,8 +18,6 @@
   const width = cssWidth * window.devicePixelRatio;
   const height = cssHeight * window.devicePixelRatio;
 
-  const colors = schemeReds[colorCount];
-
   onMounted(() => {
     const canvas = ramp.value!;
     const ctx = canvas.getContext('2d')!;
@@ -28,9 +25,13 @@
     canvas.width = width;
     canvas.height = height;
 
-    for (let i = 0; i < colorCount; i++) {
-      ctx.fillStyle = colors[colorCount - 1 - i];
-      ctx.fillRect(0, (i / colorCount) * height, width, height / colorCount);
+    for (let i = 0; i <= height; i++) {
+      ctx.strokeStyle = interpolateReds(1 - i / height);
+
+      ctx.beginPath();
+      ctx.moveTo(0, i);
+      ctx.lineTo(width, i);
+      ctx.stroke();
     }
   });
 
@@ -81,13 +82,12 @@
     top: 10px;
     width: 20px;
     height: 480px;
-    opacity: 0.75;
   }
 
   .tick {
     position: absolute;
-    left: 30px;
-    width: 10px;
+    left: 10px;
+    width: 30px;
     height: 0;
     border-top: 1px solid #333;
   }
@@ -96,6 +96,6 @@
     position: absolute;
     font-size: 10px;
     top: -8px;
-    left: 15px;
+    left: 35px;
   }
 </style>
